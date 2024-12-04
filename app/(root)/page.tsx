@@ -9,6 +9,7 @@ import { Thumbnail } from "@/components/Thumbnail";
 import { Separator } from "@/components/ui/separator";
 import { getFiles, getTotalSpaceUsed } from "@/lib/actions/file.actions";
 import { convertFileSize, getUsageSummary } from "@/lib/utils";
+import OCRUploadForm from "@/components/OCRUploadForm";
 
 const Dashboard = async () => {
   // Parallel requests
@@ -93,6 +94,10 @@ const Dashboard = async () => {
         ) : (
           <p className="empty-list">No files uploaded</p>
         )}
+      </section>
+      <section className="dashboard-ocr-upload">
+        <h2 className="h3 xl:h2 text-light-100">Upload a file for OCR processing</h2>
+        <OCRUploadForm />  {/* Display the OCR form here */}
       </section>
     </div>
   );

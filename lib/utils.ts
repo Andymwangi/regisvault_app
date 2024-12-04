@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import Tesseract from "tesseract.js";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -232,4 +233,22 @@ export const getFileTypesParams = (type: string) => {
     default:
       return ["document"];
   }
+};
+
+export const performOCR = async (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    Tesseract.recognize(
+      file,  // The image file to process
+      'eng',  // Language code for English (can be changed if needed)
+      {
+        logger: (m) => console.log(m),  // Optional: Log progress
+      }
+    )
+      .then(({ data: { text } }) => {
+        resolve(text);  // Return the extracted OCR text
+      })
+      .catch((error) => {
+        reject("OCR Error: " + error.message);  // Handle OCR errors
+      });
+  });
 };

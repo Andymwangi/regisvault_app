@@ -3,10 +3,13 @@
 import { createAdminClient, createSessionClient } from "@/lib/appwrite";
 import { InputFile } from "node-appwrite/file";
 import { appwriteConfig } from "@/lib/appwrite/config";
-import { ID, Models, Query } from "node-appwrite";
+import { ID, Models, Query, Storage, Databases, Client } from "node-appwrite";
 import { constructFileUrl, getFileType, parseStringify } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/actions/user.actions";
+import { performOCR } from "@/lib/utils";
+
+
 
 const handleError = (error: unknown, message: string) => {
   console.log(error, message);
@@ -234,3 +237,48 @@ export async function getTotalSpaceUsed() {
     handleError(error, "Error calculating total space used:, ");
   }
 }
+
+const client = new Client();
+  client
+    .setEndpoint("https://cloud.appwrite.io/v1") // Your Appwrite endpoint
+    .setProject("6734a34f00385fe4e98d"); // Your project ID
+
+const storage = new Storage(client);
+const  databases = new Databases(client);
+
+export const uploadFileWithOCR = async (
+  bucketId: string,
+  file: File,
+  databaseId: string,
+  ocrCollectionId: string
+) => {
+  try {
+    // Step 1: Upload file to Appwrite
+    const uploadedFile = await storage.createFile(bucketId, 'unique()', file);
+
+    // Step 2: Perform OCR on the uploaded file
+    const ocrText = await performOCR(file);  // Perform OCR using the function from utils.ts
+
+    // Step 3: Store OCR data in Appwrite database
+    const documentData = {
+      ocrFileId: uploadedFile.$id,
+      ocrFileName: file.name,
+      ocrText,  // Store the OCR text
+      ocrUploadedAt: Math.floor(new Date().getTime() / 1000),  // Store the timestamp
+    };
+
+    // Step 4: Save OCR data to Appwrite database
+    const document = await databases.createDocument(
+      databaseId,
+      ocrCollectionId,
+      'unique()',  // Generate a unique document ID
+      documentData
+    );
+
+    console.log("OCR data stored:", document);
+    return document;
+  } catch (error) {
+    console.error("Error uploading file and performing OCR:", error);
+    throw error;
+  }
+};
