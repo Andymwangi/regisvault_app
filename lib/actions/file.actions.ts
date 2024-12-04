@@ -238,15 +238,18 @@ export async function getTotalSpaceUsed() {
   }
 }
 
+
 const client = new Client();
-  client
-    .setEndpoint("https://cloud.appwrite.io/v1") // Your Appwrite endpoint
-    .setProject("6734a34f00385fe4e98d"); // Your project ID
+client.setEndpoint("https://cloud.appwrite.io/v1")
+.setProject("6734a34f00385fe4e98d");
 
+
+const databases = new Databases(client);
 const storage = new Storage(client);
-const  databases = new Databases(client);
 
+// Function to upload file to Appwrite and store OCR data
 export const uploadFileWithOCR = async (
+  client: Client,
   bucketId: string,
   file: File,
   databaseId: string,
@@ -282,3 +285,4 @@ export const uploadFileWithOCR = async (
     throw error;
   }
 };
+

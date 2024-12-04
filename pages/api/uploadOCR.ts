@@ -1,25 +1,32 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { uploadFileWithOCR } from '@/lib/actions/file.actions';  // Import the function to handle file upload and OCR
+import { uploadFileWithOCR } from '@/lib/actions/file.actions'; 
+import { Client } from 'node-appwrite'; // Import the function to handle file upload and OCR
 
 // API handler for file upload and OCR processing
+const client = new Client()
+
+  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
+  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
+
+const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!;
+const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
+const ocrCollectionId = process.env.NEXT_PUBLIC_APPWRITE_OCR_COLLECTION_ID!;
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
+  if (req.method === "POST") {
     try {
-      const file = req.body.file;  // Extract the file from the request body
+      const file = req.body.file; // Assumes file is sent in the request body
 
-      // Define your Appwrite bucket and database IDs here
-      const bucketId = '6734aa900012411da858';  // Replace with your Appwrite bucket ID
-      const databaseId = '6734a7e5002745ab8d59';  // Replace with your Appwrite database ID
-      const ocrCollectionId = '6749ac0b002ad7cbbf32';  // Replace with your OCR collection ID in Appwrite
+      // Call the function with all required arguments
+      const document = await uploadFileWithOCR(client, bucketId, file, databaseId, ocrCollectionId);
 
-      // Call the function to upload file and store OCR data
-      const result = await uploadFileWithOCR(bucketId, file, databaseId, ocrCollectionId);
-
-      return res.status(200).json({ success: true, data: result });  // Return success response
+      res.status(200).json({ message: "File uploaded successfully", document });
     } catch (error) {
-      return res.status(500).json({ success: false, message: error.message });  // Handle errors
+      console.error("Error uploading file:", error);
+      res.status(500).json({ error: "Failed to upload file" });
     }
   } else {
-    return res.status(405).json({ success: false, message: 'Method Not Allowed' });  // If not POST, return 405
+    res.setHeader("Allow", ["POST"]);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
